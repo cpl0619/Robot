@@ -46,24 +46,25 @@ void step(int delay, int steps){
 void tween_step(double speed, int steps){
   //First function is In part of tween
   //(steps / 2) + (steps % 2) handles odd numbers of steps
-  for(int i = 0; i < (steps / 2) + (steps % 2); i++){
+  for(int i = 0; i < steps / 2.0; i++){
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed / steps * i);
+    delayMicroseconds(speed * i / steps * 2);
     digitalWrite(STEP, LOW);
-    delayMicroseconds(speed / steps * i);
+    delayMicroseconds(speed * i / steps * 2);
   }
-  for(int i = (steps / 2) + (steps % 2); i < steps; i++){
+  //Second function is Out of tween
+  for(int i = steps / 2.0; i >= 0; i -= 1){
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed / steps * i);
+    delayMicroseconds(speed * i / steps * 2);
     digitalWrite(STEP, LOW);
-    delayMicroseconds(speed / steps * i);
+    delayMicroseconds(speed * i / steps * 2);
   }
 }
 
 void loop() {
   //basically, do one full rotation with a delay of 50 microseconds between the high and low.
-  step(50, 1600);
-  //tween_step(50.0, 1600);
+  //step(50, 1600);
+  tween_step(50.0, 1600);
   //delay 1 second
   delay(1000);
 }
