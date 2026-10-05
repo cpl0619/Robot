@@ -48,16 +48,16 @@ void tween_step(double speed, int steps){
   //(steps / 2) + (steps % 2) handles odd numbers of steps
   for(int i = 0; i < steps / 2.0; i++){
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed * i / steps * 2);
+    delayMicroseconds(speed - (speed * i / steps * 2));
     digitalWrite(STEP, LOW);
-    delayMicroseconds(speed * i / steps * 2);
+    delayMicroseconds(speed - (speed * i / steps * 2));
   }
   //Second function is Out of tween
   for(int i = steps / 2.0; i >= 0; i -= 1){
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed * i / steps * 2);
+    delayMicroseconds(speed - (speed * i / steps * 2));
     digitalWrite(STEP, LOW);
-    delayMicroseconds(speed * i / steps * 2);
+    delayMicroseconds(speed - (speed * i / steps * 2));
   }
 }
 
