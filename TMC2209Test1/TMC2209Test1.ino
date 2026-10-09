@@ -1,5 +1,6 @@
 #define DIR 3
 #define STEP 2
+#define POT A1
 
 //#define is used to set pins.
 //DIR on the driver controlls direction
@@ -27,13 +28,14 @@ void setup() {
 //We set DIR to LOW, but it can be set to high to change direction. 
 //it does not have to be set here, but in this case i did it just for testing.
   digitalWrite(DIR, LOW);
+  Serial.begin(9600);
 }
 
 
 //A step happens when STEP is sent a HIGH signal, followed by a LOW signal. this rotates the motor a small amount.
 //A delay is put between the HIGH and LOW to control speed. lower delay = faster, longer delay = slower
 
-void step(int delay, int steps){
+void step(int speed, int steps){
   for(int i = 0; i < steps; i++){
     digitalWrite(STEP, HIGH);
     delayMicroseconds(speed);
@@ -42,29 +44,33 @@ void step(int delay, int steps){
   }
 }
 
-// I would honestly rather call "speed" "delay" or at least something like "speed inversion variable"
-void tween_step(double speed, int steps){
-  //First function is In part of tween
-  //(steps / 2) + (steps % 2) handles odd numbers of steps
-  for(int i = 0; i < steps / 2.0; i++){
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed - (speed * i / steps * 2));
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(speed - (speed * i / steps * 2));
-  }
-  //Second function is Out of tween
-  for(int i = steps / 2.0; i >= 0; i -= 1){
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed - (speed * i / steps * 2));
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(speed - (speed * i / steps * 2));
-  }
+void turnPlanetary(int turns, int speed){
+  step(speed, (1600 * 4.5) * turns);
+}
+
+void potvaluedrive() {
+    int value = analogRead(POT);
+    int minSpeed = 1000;     // Fastest (microseconds)
+    int maxSpeed = 5000;   // Slowest (microseconds)
+    int deadzone = 25;     // Half-width of deadzone around center
+    int center = 512;
+
+    if (value < center - deadzone) {
+        digitalWrite(DIR, HIGH);
+        int speed = map(value, center - deadzone - 1, 0,maxSpeed, minSpeed);
+        step(speed, 25);
+    }
+    else if (value > center + deadzone) {
+        digitalWrite(DIR, LOW);
+        int speed = map(value, center + deadzone + 1, 1023, maxSpeed, minSpeed);
+        step(speed, 25);
+    }
+    else {
+        step(0, 0);
+    }
 }
 
 void loop() {
-  //basically, do one full rotation with a delay of 50 microseconds between the high and low.
-  //step(50, 1600);
-  tween_step(50.0, 1600);
-  //delay 1 second
-  delay(1000);
+  Serial.println(analogRead(POT));
+  potvaluedrive();
 }
