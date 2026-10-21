@@ -44,6 +44,29 @@ void step(int speed, int steps){
   }
 }
 
+// For this four-phase stepper function, this waits twice the "speed" variable at the start.
+// It then approaches "speed" itself at the center two loops, then takes longer again at the end.
+void FourPhaseStep(int speed, int steps){
+  for (int i = 0; i < steps / 4; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(speed * 2 - (speed * i / (steps / 4)));
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(speed * 2 - (speed * i / (steps / 4)));
+  }
+  for (int i = steps / 4; 3 * i < steps / 4; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(speed);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(speed);
+  }
+  for (int i = 3 * steps / 4; i <= steps; i++){
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(speed * ((i - (3 * steps / 4)) / (steps / 4) + 1));
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(speed * ((i - (3 * steps / 4)) / (steps / 4) + 1));
+  }
+}
+
 void turnPlanetary(int turns, int speed){
   step(speed, (1600 * 4.5) * turns);
 }
