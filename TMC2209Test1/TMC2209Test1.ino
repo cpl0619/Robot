@@ -27,7 +27,6 @@ void setup() {
 
 //We set DIR to LOW, but it can be set to high to change direction. 
 //it does not have to be set here, but in this case i did it just for testing.
-  digitalWrite(DIR, LOW);
   Serial.begin(9600);
 }
 
@@ -46,29 +45,69 @@ void step(int speed, int steps){
 
 // For this four-phase stepper function, this waits twice the "speed" variable at the start.
 // It then approaches "speed" itself at the center two loops, then takes longer again at the end.
-void FourPhaseStep(int speed, int steps){
-  for (int i = 0; i < steps / 4; i++){
-    digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed * 2 - (speed * i / (steps / 4)));
-    digitalWrite(STEP, LOW);
-    delayMicroseconds(speed * 2 - (speed * i / (steps / 4)));
+
+void FourPhaseStep(int speed, float rotations) {
+  if (rotations <= 0) return;
+
+  long steps = (long)(rotations * 1600);
+
+  // Fixed acceleration and deceleration distances
+  long accelSteps = 1600;
+  long decelSteps = 3200;
+  // if you are reading this christian, After experimenting, I have found that four phases in which the accelaration + constant phase + decel phase
+  // do not work to well. as a result, I have a fixed accelaration and decelaration phase. these correspond tio the variables above.
+
+  //Also, Instead of linearly accelarating, it exponentially accelarates and decelarates. this is kind of like a tween in roblox.
+
+  // Handle short movements
+  if (accelSteps + decelSteps > steps) {
+    accelSteps = steps / 2;
+    decelSteps = steps - accelSteps;
   }
-  for (int i = steps / 4; 3 * i < steps / 4; i++){
+
+  long cruiseSteps = steps - accelSteps - decelSteps;
+
+  int slowDelay = speed * 4;
+
+  // ACCELERATION: exponential
+  for (long i = 0; i < accelSteps; i++) {
+    float t = (float)i / accelSteps;
+    float curve = t * t;
+
+    int delayTime = slowDelay -
+      (int)((slowDelay - speed) * curve);
+
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(delayTime);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(delayTime);
+  }
+
+  // CONSTANT SPEED
+  for (long i = 0; i < cruiseSteps; i++) {
     digitalWrite(STEP, HIGH);
     delayMicroseconds(speed);
     digitalWrite(STEP, LOW);
     delayMicroseconds(speed);
   }
-  for (int i = 3 * steps / 4; i <= steps; i++){
+
+  // DECELERATION: exponential
+  for (long i = 0; i < decelSteps; i++) {
+    float t = (float)i / decelSteps;
+    float curve = t * t;
+
+    int delayTime = speed +
+      (int)((slowDelay - speed) * curve);
+
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(speed * ((i - (3 * steps / 4)) / (steps / 4) + 1));
+    delayMicroseconds(delayTime);
     digitalWrite(STEP, LOW);
-    delayMicroseconds(speed * ((i - (3 * steps / 4)) / (steps / 4) + 1));
+    delayMicroseconds(delayTime);
   }
 }
 
-void turnPlanetary(int turns, int speed){
-  step(speed, (1600 * 4.5) * turns);
+void PlanetaryTurn(int turns, double ratio){
+  FourPhaseStep(75, 1600 * ratio);
 }
 
 void potvaluedrive() {
@@ -94,6 +133,8 @@ void potvaluedrive() {
 }
 
 void loop() {
-  Serial.println(analogRead(POT));
-  potvaluedrive();
+ FourPhaseStep(75, 46.24/4);
+ digitalWrite(DIR, HIGH);
+ FourPhaseStep(75, 46.24/4);
+ digitalWrite(DIR, LOW);
 }
