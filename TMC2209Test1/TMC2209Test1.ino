@@ -106,6 +106,7 @@ void FourPhaseStep(int speed, float rotations) {
   }
 }
 
+//ignore this function, its for testing.
 void PlanetaryTurn(int turns, double ratio){
   FourPhaseStep(75, 1600 * ratio);
 }
